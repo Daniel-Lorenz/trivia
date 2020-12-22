@@ -3,9 +3,11 @@ package com.adaptionsoft.games.uglytrivia;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class BetterGame implements IGame {
     List<String> players = new ArrayList<>();
+    List<Player> playerSSSSS = new ArrayList<>();
     int[] places = new int[6];
     int[] purses  = new int[6];
     boolean[] inPenaltyBox  = new boolean[6];
@@ -19,18 +21,30 @@ public class BetterGame implements IGame {
     boolean isGettingOutOfPenaltyBox;
 
     public  BetterGame(){
-        for (int i = 0; i < 50; i++) {
+        IntStream.range(0, 50).forEach(i -> {
             popQuestions.addLast("Pop Question " + i);
-            scienceQuestions.addLast(("Science Question " + i));
-            sportsQuestions.addLast(("Sports Question " + i));
+            scienceQuestions.addLast("Science Question " + i);
+            sportsQuestions.addLast("Sports Question " + i);
             rockQuestions.addLast("Rock Question " + i);
+        });
+    }
+
+    class Player{
+        private final String name;
+
+        Player(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 
     @Override
     public boolean add(String playerName) {
 
-
+        playerSSSSS.add(new Player(playerName));
         players.add(playerName);
         places[players.size()] = 0;
         purses[players.size()] = 0;
@@ -43,24 +57,24 @@ public class BetterGame implements IGame {
 
     @Override
     public void roll(int roll) {
-        System.out.println(players.get(currentPlayer) + " is the current player");
+        System.out.println(playerSSSSS.get(currentPlayer).getName() + " is the current player");
         System.out.println("They have rolled a " + roll);
 
         if (inPenaltyBox[currentPlayer]) {
             if (roll % 2 != 0) {
                 isGettingOutOfPenaltyBox = true;
 
-                System.out.println(players.get(currentPlayer) + " is getting out of the penalty box");
+                System.out.println(playerSSSSS.get(currentPlayer).getName() + " is getting out of the penalty box");
                 places[currentPlayer] = places[currentPlayer] + roll;
                 if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
 
-                System.out.println(players.get(currentPlayer)
+                System.out.println(playerSSSSS.get(currentPlayer).getName()
                         + "'s new location is "
                         + places[currentPlayer]);
                 System.out.println("The category is " + currentCategory());
                 askQuestion();
             } else {
-                System.out.println(players.get(currentPlayer) + " is not getting out of the penalty box");
+                System.out.println(playerSSSSS.get(currentPlayer).getName() + " is not getting out of the penalty box");
                 isGettingOutOfPenaltyBox = false;
             }
 
@@ -69,7 +83,7 @@ public class BetterGame implements IGame {
             places[currentPlayer] = places[currentPlayer] + roll;
             if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
 
-            System.out.println(players.get(currentPlayer)
+            System.out.println(playerSSSSS.get(currentPlayer).getName()
                     + "'s new location is "
                     + places[currentPlayer]);
             System.out.println("The category is " + currentCategory());
@@ -109,7 +123,7 @@ public class BetterGame implements IGame {
             if (isGettingOutOfPenaltyBox) {
                 System.out.println("Answer was correct!!!!");
                 purses[currentPlayer]++;
-                System.out.println(players.get(currentPlayer)
+                System.out.println(playerSSSSS.get(currentPlayer).getName()
                         + " now has "
                         + purses[currentPlayer]
                         + " Gold Coins.");
@@ -131,7 +145,7 @@ public class BetterGame implements IGame {
 
             System.out.println("Answer was corrent!!!!");
             purses[currentPlayer]++;
-            System.out.println(players.get(currentPlayer)
+            System.out.println(playerSSSSS.get(currentPlayer).getName()
                     + " now has "
                     + purses[currentPlayer]
                     + " Gold Coins.");
@@ -147,7 +161,7 @@ public class BetterGame implements IGame {
     @Override
     public boolean wrongAnswer(){
         System.out.println("Question was incorrectly answered");
-        System.out.println(players.get(currentPlayer)+ " was sent to the penalty box");
+        System.out.println(playerSSSSS.get(currentPlayer).getName()+ " was sent to the penalty box");
         inPenaltyBox[currentPlayer] = true;
 
         currentPlayer++;
