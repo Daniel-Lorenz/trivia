@@ -7,8 +7,7 @@ import java.util.stream.IntStream;
 
 public class BetterGame implements IGame {
     List<Player> players = new ArrayList<>();
-    int[] purses  = new int[6];
-    boolean[] inPenaltyBox  = new boolean[6];
+    boolean[] inPenaltyBox = new boolean[6];
 
     LinkedList<String> popQuestions = new LinkedList<>();
     LinkedList<String> scienceQuestions = new LinkedList<>();
@@ -18,7 +17,7 @@ public class BetterGame implements IGame {
     int currentPlayer = 0;
     boolean isGettingOutOfPenaltyBox;
 
-    public  BetterGame(){
+    public BetterGame() {
         IntStream.range(0, 50).forEach(i -> {
             popQuestions.addLast("Pop Question " + i);
             scienceQuestions.addLast("Science Question " + i);
@@ -27,38 +26,10 @@ public class BetterGame implements IGame {
         });
     }
 
-    static class Player{
-        private final String name;
-        private int positionOnBoard;
-
-        Player(String name) {
-            this.name = name;
-            this.positionOnBoard = 0;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-
-        public int getPosition() {
-            return positionOnBoard;
-        }
-
-        public void move(int roll){
-            positionOnBoard = positionOnBoard + roll;
-            if (positionOnBoard >= 12) {
-                positionOnBoard = positionOnBoard - 12;
-            }
-
-        }
-    }
-
     @Override
     public boolean add(String playerName) {
 
         players.add(new Player(playerName));
-        purses[players.size()] = 0;
         inPenaltyBox[players.size()] = false;
 
         System.out.println(playerName + " was added");
@@ -121,7 +92,6 @@ public class BetterGame implements IGame {
             System.out.println(rockQuestions.removeFirst());
     }
 
-
     private String currentCategory() {
         if (getPosition() == 0) return "Pop";
         if (getPosition() == 4) return "Pop";
@@ -141,58 +111,97 @@ public class BetterGame implements IGame {
 
     @Override
     public boolean wasCorrectlyAnswered() {
-        if (inPenaltyBox[currentPlayer]){
+        if (inPenaltyBox[currentPlayer]) {
             if (isGettingOutOfPenaltyBox) {
                 System.out.println("Answer was correct!!!!");
-                purses[currentPlayer]++;
+                scorePoint();
                 System.out.println(currentPlayer().getName()
                         + " now has "
-                        + purses[currentPlayer]
+                        + currentPlayer().getPoints()
                         + " Gold Coins.");
 
                 boolean winner = didPlayerWin();
-                currentPlayer++;
-                if (currentPlayer == players.size()) currentPlayer = 0;
+                nextPlayersTurn();
 
                 return winner;
             } else {
-                currentPlayer++;
-                if (currentPlayer == players.size()) currentPlayer = 0;
+                nextPlayersTurn();
                 return true;
             }
-
 
 
         } else {
 
             System.out.println("Answer was corrent!!!!");
-            purses[currentPlayer]++;
+            scorePoint();
             System.out.println(currentPlayer().getName()
                     + " now has "
-                    + purses[currentPlayer]
+                    + currentPlayer().getPoints()
                     + " Gold Coins.");
 
             boolean winner = didPlayerWin();
-            currentPlayer++;
-            if (currentPlayer == players.size()) currentPlayer = 0;
+            nextPlayersTurn();
 
             return winner;
         }
     }
 
-    @Override
-    public boolean wrongAnswer(){
-        System.out.println("Question was incorrectly answered");
-        System.out.println(currentPlayer().getName()+ " was sent to the penalty box");
-        inPenaltyBox[currentPlayer] = true;
+    private void scorePoint() {
+        currentPlayer().scoreOnePoint();
+    }
 
+    private void nextPlayersTurn() {
         currentPlayer++;
         if (currentPlayer == players.size()) currentPlayer = 0;
+    }
+
+    @Override
+    public boolean wrongAnswer() {
+        System.out.println("Question was incorrectly answered");
+        System.out.println(currentPlayer().getName() + " was sent to the penalty box");
+        inPenaltyBox[currentPlayer] = true;
+
+        nextPlayersTurn();
         return true;
     }
 
-
     private boolean didPlayerWin() {
-        return !(purses[currentPlayer] == 6);
+        return !(currentPlayer().getPoints() == 6);
+    }
+
+    static class Player {
+        private final String name;
+        private int positionOnBoard;
+        private int points;
+
+        Player(String name) {
+            this.name = name;
+            this.positionOnBoard = 0;
+            this.points = 0;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getPoints() {
+            return points;
+        }
+
+        public int getPosition() {
+            return positionOnBoard;
+        }
+
+        public void move(int roll) {
+            positionOnBoard = positionOnBoard + roll;
+            if (positionOnBoard >= 12) {
+                positionOnBoard = positionOnBoard - 12;
+            }
+
+        }
+
+        public void scoreOnePoint() {
+            this.points++;
+        }
     }
 }
