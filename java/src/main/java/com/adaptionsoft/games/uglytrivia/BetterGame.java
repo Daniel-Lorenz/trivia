@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 public class BetterGame implements IGame {
-    List<String> players = new ArrayList<>();
     List<Player> playerSSSSS = new ArrayList<>();
     int[] places = new int[6];
     int[] purses  = new int[6];
@@ -45,13 +44,12 @@ public class BetterGame implements IGame {
     public boolean add(String playerName) {
 
         playerSSSSS.add(new Player(playerName));
-        players.add(playerName);
-        places[players.size()] = 0;
-        purses[players.size()] = 0;
-        inPenaltyBox[players.size()] = false;
+        places[playerSSSSS.size()] = 0;
+        purses[playerSSSSS.size()] = 0;
+        inPenaltyBox[playerSSSSS.size()] = false;
 
         System.out.println(playerName + " was added");
-        System.out.println("They are player number " + players.size());
+        System.out.println("They are player number " + playerSSSSS.size());
         return true;
     }
 
@@ -130,12 +128,12 @@ public class BetterGame implements IGame {
 
                 boolean winner = didPlayerWin();
                 currentPlayer++;
-                if (currentPlayer == players.size()) currentPlayer = 0;
+                if (currentPlayer == playerSSSSS.size()) currentPlayer = 0;
 
                 return winner;
             } else {
                 currentPlayer++;
-                if (currentPlayer == players.size()) currentPlayer = 0;
+                if (currentPlayer == playerSSSSS.size()) currentPlayer = 0;
                 return true;
             }
 
@@ -152,7 +150,7 @@ public class BetterGame implements IGame {
 
             boolean winner = didPlayerWin();
             currentPlayer++;
-            if (currentPlayer == players.size()) currentPlayer = 0;
+            if (currentPlayer == playerSSSSS.size()) currentPlayer = 0;
 
             return winner;
         }
@@ -165,7 +163,7 @@ public class BetterGame implements IGame {
         inPenaltyBox[currentPlayer] = true;
 
         currentPlayer++;
-        if (currentPlayer == players.size()) currentPlayer = 0;
+        if (currentPlayer == playerSSSSS.size()) currentPlayer = 0;
         return true;
     }
 
