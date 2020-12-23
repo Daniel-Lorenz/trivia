@@ -46,7 +46,7 @@ public class BetterGame implements IGame {
 
                 System.out.println(currentPlayer().getName() + " is getting out of the penalty box");
 
-                moveCurrentPlayer(roll);
+                currentPlayer().move(roll);
 
                 displayPosition();
                 displayCurrentCategory();
@@ -58,7 +58,7 @@ public class BetterGame implements IGame {
 
         } else {
 
-            moveCurrentPlayer(roll);
+            currentPlayer().move(roll);
 
             displayPosition();
             displayCurrentCategory();
@@ -75,10 +75,6 @@ public class BetterGame implements IGame {
         System.out.println(currentPlayer().getName()
                 + "'s new location is "
                 + getPosition());
-    }
-
-    private void moveCurrentPlayer(int roll) {
-        currentPlayer().move(roll);
     }
 
     private Player currentPlayer() {
@@ -118,7 +114,7 @@ public class BetterGame implements IGame {
         if (currentPlayer().isInPenaltyBox()) {
             if (isGettingOutOfPenaltyBox) {
                 displaySuccessMsg();
-                scorePoint();
+                currentPlayer().scoreOnePoint();
                 displayPoints();
 
                 boolean winner = didPlayerWin();
@@ -134,7 +130,7 @@ public class BetterGame implements IGame {
         } else {
 
             displaySuccessMsg();
-            scorePoint();
+            currentPlayer().scoreOnePoint();
             displayPoints();
 
             boolean winner = didPlayerWin();
@@ -155,10 +151,6 @@ public class BetterGame implements IGame {
                 + " Gold Coins.");
     }
 
-    private void scorePoint() {
-        currentPlayer().scoreOnePoint();
-    }
-
     private void nextPlayersTurn() {
         currentPlayer++;
         if (currentPlayer == players.size()) currentPlayer = 0;
@@ -168,14 +160,11 @@ public class BetterGame implements IGame {
     public boolean wrongAnswer() {
         System.out.println("Question was incorrectly answered");
         System.out.println(currentPlayer().getName() + " was sent to the penalty box");
-        sentToPenaltyBox();
+
+        currentPlayer().sentToPenaltyBox();
 
         nextPlayersTurn();
         return true;
-    }
-
-    private void sentToPenaltyBox() {
-        currentPlayer().sentToPenaltyBox();
     }
 
     private boolean didPlayerWin() {
