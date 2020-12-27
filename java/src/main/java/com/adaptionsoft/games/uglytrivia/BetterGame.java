@@ -1,8 +1,5 @@
 package com.adaptionsoft.games.uglytrivia;
 
-import io.vavr.Tuple2;
-import io.vavr.collection.Queue;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,7 +24,7 @@ public class BetterGame implements IGame {
     }
 
     private Deck buildQuestionDeck(String commonPart) {
-        return DeckBuilder.aDeck()
+        return Deck.DeckBuilder.aDeck()
                 .withQuestions(IntStream.range(0, 50)
                         .mapToObj((i) -> commonPart + i)
                         .collect(Collectors.toList()))
@@ -46,26 +43,41 @@ public class BetterGame implements IGame {
 
     @Override
     public void roll(int roll) {
-        System.out.println(currentPlayer().getName() + " is the current player");
-        System.out.println("They have rolled a " + roll);
+        displayCurrentPlayerName();
+        displayRolledValue(roll);
 
         if (currentPlayer().isInPenaltyBox()) {
             if (roll % 2 == 0) {
-                System.out.println(currentPlayer().getName() + " is not getting out of the penalty box");
-                isGettingOutOfPenaltyBox = false;
+                playerIsNotGettingOutOfPenaltyBox();
                 return;
             } else {
-                isGettingOutOfPenaltyBox = true;
-                System.out.println(currentPlayer().getName() + " is getting out of the penalty box");
+                playerIsGettingOutOfPenaltyBox();
             }
         }
 
         currentPlayer().move(roll);
-
         displayPosition();
         displayCurrentCategory();
         askQuestion();
 
+    }
+
+    private void playerIsGettingOutOfPenaltyBox() {
+        isGettingOutOfPenaltyBox = true;
+        System.out.println(currentPlayer().getName() + " is getting out of the penalty box");
+    }
+
+    private void playerIsNotGettingOutOfPenaltyBox() {
+        System.out.println(currentPlayer().getName() + " is not getting out of the penalty box");
+        isGettingOutOfPenaltyBox = false;
+    }
+
+    private void displayRolledValue(int roll) {
+        System.out.println("They have rolled a " + roll);
+    }
+
+    private void displayCurrentPlayerName() {
+        System.out.println(currentPlayer().getName() + " is the current player");
     }
 
     private void displayCurrentCategory() {
@@ -83,42 +95,22 @@ public class BetterGame implements IGame {
     }
 
     private void askQuestion() {
-        if (currentCategory().equals(QuestionTypes.POP))
-            System.out.println(popQuestions.drawOne());
-        if (currentCategory().equals(QuestionTypes.SCIENCE))
-            System.out.println(scienceQuestions.drawOne());
-        if (currentCategory().equals(QuestionTypes.SPORTS))
-            System.out.println(sportsQuestions.drawOne());
-        if (currentCategory().equals(QuestionTypes.ROCK))
-            System.out.println(rockQuestions.drawOne());
+        System.out.println(drawQuestionOfCurrentCategory());
     }
 
-    enum QuestionTypes{
-        POP("Pop"),
-        SCIENCE("Science"),
-        SPORTS("Sports"),
-        ROCK("Rock");
-
-        private final String type;
-        QuestionTypes(String type) {
-            this.type = type;
-        }
-
-        public String getType() {
-            return type;
-        }
+    private String drawQuestionOfCurrentCategory() {
+        return switch (currentCategory()) {
+            case ROCK -> rockQuestions.drawOne();
+            case SPORTS -> sportsQuestions.drawOne();
+            case SCIENCE -> scienceQuestions.drawOne();
+            case POP -> popQuestions.drawOne();
+        };
     }
 
     private QuestionTypes currentCategory() {
-        if (getPosition() == 0) return QuestionTypes.POP;
-        if (getPosition() == 4) return QuestionTypes.POP;
-        if (getPosition() == 8) return QuestionTypes.POP;
-        if (getPosition() == 1) return QuestionTypes.SCIENCE;
-        if (getPosition() == 5) return QuestionTypes.SCIENCE;
-        if (getPosition() == 9) return QuestionTypes.SCIENCE;
-        if (getPosition() == 2) return QuestionTypes.SPORTS;
-        if (getPosition() == 6) return QuestionTypes.SPORTS;
-        if (getPosition() == 10) return QuestionTypes.SPORTS;
+        if (getPosition() % 4 == 0) return QuestionTypes.POP;
+        if (getPosition() % 4 == 1) return QuestionTypes.SCIENCE;
+        if (getPosition() % 4 == 2) return QuestionTypes.SPORTS;
         return QuestionTypes.ROCK;
     }
 
@@ -128,23 +120,22 @@ public class BetterGame implements IGame {
 
     @Override
     public boolean wasCorrectlyAnswered() {
-        boolean playerHasNotWon = asd();
+        if(playerIsNotAllowedToWin()) {
+            nextPlayersTurn();
+            return true;
+        }
+
+        displaySuccessMsg();
+        currentPlayer().scoreOnePoint();
+        displayPoints();
+
+        boolean playerHasNotWon = hasCurrentPlayerNotWon();
         nextPlayersTurn();
         return playerHasNotWon;
     }
 
-    private boolean asd() {
-        if (currentPlayer().isInPenaltyBox() && !isGettingOutOfPenaltyBox) {
-
-            return true;
-        } else {
-
-            displaySuccessMsg();
-            currentPlayer().scoreOnePoint();
-            displayPoints();
-
-            return notYetWon();
-        }
+    private boolean playerIsNotAllowedToWin() {
+        return currentPlayer().isInPenaltyBox() && !isGettingOutOfPenaltyBox;
     }
 
     private void displaySuccessMsg() {
@@ -174,89 +165,25 @@ public class BetterGame implements IGame {
         return true;
     }
 
-    private boolean notYetWon() {
+    private boolean hasCurrentPlayerNotWon() {
         return !(currentPlayer().getPoints() == 6);
     }
 
-    static class Player {
-        private final String name;
-        private int positionOnBoard;
-        private int points;
-        private boolean inPenaltyBox;
+    enum QuestionTypes {
+        POP("Pop"),
+        SCIENCE("Science"),
+        SPORTS("Sports"),
+        ROCK("Rock");
 
-        Player(String name) {
-            this.name = name;
-            this.positionOnBoard = 0;
-            this.points = 0;
-            this.inPenaltyBox = false;
+        private final String type;
+
+        QuestionTypes(String type) {
+            this.type = type;
         }
 
-        public void sentToPenaltyBox() {
-            this.inPenaltyBox = true;
-        }
-
-        public boolean isInPenaltyBox() {
-            return inPenaltyBox;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public int getPoints() {
-            return points;
-        }
-
-        public int getPosition() {
-            return positionOnBoard;
-        }
-
-        public void move(int roll) {
-            positionOnBoard = positionOnBoard + roll;
-            if (positionOnBoard >= 12) {
-                positionOnBoard = positionOnBoard - 12;
-            }
-        }
-
-        public void scoreOnePoint() {
-            this.points++;
+        public String getType() {
+            return type;
         }
     }
 
-    static class Deck {
-
-        private final Queue<String> cards;
-        private Queue<String> drawPile;
-
-        Deck(Queue<String> cards) {
-            this.cards = cards;
-            this.drawPile = cards;
-        }
-
-        public String drawOne() {
-            Tuple2<String, Queue<String>> cardAndPile = drawPile.dequeueOption().getOrElse(cards::dequeue);
-            drawPile = cardAndPile._2;
-            return cardAndPile._1;
-        }
-    }
-
-    static class DeckBuilder {
-        private Queue<String> cards = Queue.empty();
-
-        private DeckBuilder() {
-        }
-
-        public static DeckBuilder aDeck() {
-            return new DeckBuilder();
-        }
-
-        public DeckBuilder withQuestions(List<String> strings) {
-            cards = cards.appendAll(strings);
-            return this;
-        }
-
-        public Deck build() {
-            return new Deck(cards);
-        }
-    }
 }
