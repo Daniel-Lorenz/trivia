@@ -1,28 +1,37 @@
 package com.adaptionsoft.games.uglytrivia;
 
+import io.vavr.Tuple2;
+import io.vavr.collection.Queue;
+
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class BetterGame implements IGame {
-    List<Player> players = new ArrayList<>();
+    private final Deck popQuestions;
+    private final Deck scienceQuestions;
+    private final Deck sportsQuestions;
+    private final Deck rockQuestions;
 
-    LinkedList<String> popQuestions = new LinkedList<>();
-    LinkedList<String> scienceQuestions = new LinkedList<>();
-    LinkedList<String> sportsQuestions = new LinkedList<>();
-    LinkedList<String> rockQuestions = new LinkedList<>();
+    private final List<Player> players = new ArrayList<>();
 
     int currentPlayer = 0;
     boolean isGettingOutOfPenaltyBox;
 
     public BetterGame() {
-        IntStream.range(0, 50).forEach(i -> {
-            popQuestions.addLast("Pop Question " + i);
-            scienceQuestions.addLast("Science Question " + i);
-            sportsQuestions.addLast("Sports Question " + i);
-            rockQuestions.addLast("Rock Question " + i);
-        });
+        popQuestions = buildQuestionDeck("Pop Question ");
+        scienceQuestions = buildQuestionDeck("Science Question ");
+        sportsQuestions = buildQuestionDeck("Sports Question ");
+        rockQuestions = buildQuestionDeck("Rock Question ");
+    }
+
+    private Deck buildQuestionDeck(String commonPart) {
+        return DeckBuilder.aDeck()
+                .withQuestions(IntStream.range(0, 50)
+                        .mapToObj((i) -> commonPart + i)
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     @Override
@@ -41,34 +50,26 @@ public class BetterGame implements IGame {
         System.out.println("They have rolled a " + roll);
 
         if (currentPlayer().isInPenaltyBox()) {
-            if (roll % 2 != 0) {
-                isGettingOutOfPenaltyBox = true;
-
-                System.out.println(currentPlayer().getName() + " is getting out of the penalty box");
-
-                currentPlayer().move(roll);
-
-                displayPosition();
-                displayCurrentCategory();
-                askQuestion();
-            } else {
+            if (roll % 2 == 0) {
                 System.out.println(currentPlayer().getName() + " is not getting out of the penalty box");
                 isGettingOutOfPenaltyBox = false;
+                return;
+            } else {
+                isGettingOutOfPenaltyBox = true;
+                System.out.println(currentPlayer().getName() + " is getting out of the penalty box");
             }
-
-        } else {
-
-            currentPlayer().move(roll);
-
-            displayPosition();
-            displayCurrentCategory();
-            askQuestion();
         }
+
+        currentPlayer().move(roll);
+
+        displayPosition();
+        displayCurrentCategory();
+        askQuestion();
 
     }
 
     private void displayCurrentCategory() {
-        System.out.println("The category is " + currentCategory());
+        System.out.println("The category is " + currentCategory().getType());
     }
 
     private void displayPosition() {
@@ -82,27 +83,43 @@ public class BetterGame implements IGame {
     }
 
     private void askQuestion() {
-        if (currentCategory().equals("Pop"))
-            System.out.println(popQuestions.removeFirst());
-        if (currentCategory().equals("Science"))
-            System.out.println(scienceQuestions.removeFirst());
-        if (currentCategory().equals("Sports"))
-            System.out.println(sportsQuestions.removeFirst());
-        if (currentCategory().equals("Rock"))
-            System.out.println(rockQuestions.removeFirst());
+        if (currentCategory().equals(QuestionTypes.POP))
+            System.out.println(popQuestions.drawOne());
+        if (currentCategory().equals(QuestionTypes.SCIENCE))
+            System.out.println(scienceQuestions.drawOne());
+        if (currentCategory().equals(QuestionTypes.SPORTS))
+            System.out.println(sportsQuestions.drawOne());
+        if (currentCategory().equals(QuestionTypes.ROCK))
+            System.out.println(rockQuestions.drawOne());
     }
 
-    private String currentCategory() {
-        if (getPosition() == 0) return "Pop";
-        if (getPosition() == 4) return "Pop";
-        if (getPosition() == 8) return "Pop";
-        if (getPosition() == 1) return "Science";
-        if (getPosition() == 5) return "Science";
-        if (getPosition() == 9) return "Science";
-        if (getPosition() == 2) return "Sports";
-        if (getPosition() == 6) return "Sports";
-        if (getPosition() == 10) return "Sports";
-        return "Rock";
+    enum QuestionTypes{
+        POP("Pop"),
+        SCIENCE("Science"),
+        SPORTS("Sports"),
+        ROCK("Rock");
+
+        private final String type;
+        QuestionTypes(String type) {
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+    }
+
+    private QuestionTypes currentCategory() {
+        if (getPosition() == 0) return QuestionTypes.POP;
+        if (getPosition() == 4) return QuestionTypes.POP;
+        if (getPosition() == 8) return QuestionTypes.POP;
+        if (getPosition() == 1) return QuestionTypes.SCIENCE;
+        if (getPosition() == 5) return QuestionTypes.SCIENCE;
+        if (getPosition() == 9) return QuestionTypes.SCIENCE;
+        if (getPosition() == 2) return QuestionTypes.SPORTS;
+        if (getPosition() == 6) return QuestionTypes.SPORTS;
+        if (getPosition() == 10) return QuestionTypes.SPORTS;
+        return QuestionTypes.ROCK;
     }
 
     private int getPosition() {
@@ -111,32 +128,22 @@ public class BetterGame implements IGame {
 
     @Override
     public boolean wasCorrectlyAnswered() {
-        if (currentPlayer().isInPenaltyBox()) {
-            if (isGettingOutOfPenaltyBox) {
-                displaySuccessMsg();
-                currentPlayer().scoreOnePoint();
-                displayPoints();
+        boolean playerHasNotWon = asd();
+        nextPlayersTurn();
+        return playerHasNotWon;
+    }
 
-                boolean winner = didPlayerWin();
-                nextPlayersTurn();
+    private boolean asd() {
+        if (currentPlayer().isInPenaltyBox() && !isGettingOutOfPenaltyBox) {
 
-                return winner;
-            } else {
-                nextPlayersTurn();
-                return true;
-            }
-
-
+            return true;
         } else {
 
             displaySuccessMsg();
             currentPlayer().scoreOnePoint();
             displayPoints();
 
-            boolean winner = didPlayerWin();
-            nextPlayersTurn();
-
-            return winner;
+            return notYetWon();
         }
     }
 
@@ -167,7 +174,7 @@ public class BetterGame implements IGame {
         return true;
     }
 
-    private boolean didPlayerWin() {
+    private boolean notYetWon() {
         return !(currentPlayer().getPoints() == 6);
     }
 
@@ -184,7 +191,7 @@ public class BetterGame implements IGame {
             this.inPenaltyBox = false;
         }
 
-        public void sentToPenaltyBox(){
+        public void sentToPenaltyBox() {
             this.inPenaltyBox = true;
         }
 
@@ -213,6 +220,43 @@ public class BetterGame implements IGame {
 
         public void scoreOnePoint() {
             this.points++;
+        }
+    }
+
+    static class Deck {
+
+        private final Queue<String> cards;
+        private Queue<String> drawPile;
+
+        Deck(Queue<String> cards) {
+            this.cards = cards;
+            this.drawPile = cards;
+        }
+
+        public String drawOne() {
+            Tuple2<String, Queue<String>> cardAndPile = drawPile.dequeueOption().getOrElse(cards::dequeue);
+            drawPile = cardAndPile._2;
+            return cardAndPile._1;
+        }
+    }
+
+    static class DeckBuilder {
+        private Queue<String> cards = Queue.empty();
+
+        private DeckBuilder() {
+        }
+
+        public static DeckBuilder aDeck() {
+            return new DeckBuilder();
+        }
+
+        public DeckBuilder withQuestions(List<String> strings) {
+            cards = cards.appendAll(strings);
+            return this;
+        }
+
+        public Deck build() {
+            return new Deck(cards);
         }
     }
 }
